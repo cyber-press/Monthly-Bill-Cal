@@ -1,0 +1,263 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Monthly Bills Log</title>
+<style>
+  body {
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    background-color: #f5f6fa;
+    color: #222;
+    margin: 0;
+    padding: 1rem;
+  }
+  .container {
+    max-width: 560px;
+    margin: auto;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  }
+  h2 {
+    text-align: center;
+    font-size: 1.3rem;
+    margin-bottom: 1.2rem;
+    font-weight: 600;
+  }
+  select {
+    width: 100%;
+    padding: 0.55rem;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  label {
+    font-size: 0.95rem;
+    display: block;
+    margin-top: 0.75rem;
+    font-weight: 500;
+  }
+  input[type="number"] {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.95rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  button {
+    margin-top: 1.2rem;
+    padding: 0.75rem;
+    width: 100%;
+    font-size: 1rem;
+    font-weight: 600;
+    background-color: #1e3a8a;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .summary {
+    margin-top: 1.5rem;
+    background: #f0f2f5;
+    padding: 1rem;
+    font-size: 0.95rem;
+    border-radius: 4px;
+    border-left: 4px solid #1e3a8a;
+  }
+  .summary p {
+    margin: 0.4rem 0;
+  }
+  .footer-note {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #777;
+    margin-top: 2rem;
+  }
+</style>
+
+<link rel="manifest" href="manifest_updated.json">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js');
+  }
+</script>
+
+</head>
+<body>
+<div class="container">
+  <h2>Monthly Bills Log</h2>
+  <select id="monthSelect" onchange="loadMonth()">
+    <option value="">-- Select Month --</option>
+    <option value="May 2025">May 2025</option><option value="June 2025">June 2025</option><option value="July 2025">July 2025</option><option value="August 2025">August 2025</option><option value="September 2025">September 2025</option><option value="October 2025">October 2025</option><option value="November 2025">November 2025</option><option value="December 2025">December 2025</option><option value="January 2026">January 2026</option><option value="February 2026">February 2026</option><option value="March 2026">March 2026</option><option value="April 2026">April 2026</option>
+  </select>
+
+  <div id="formSection" style="display:none;">
+    <label>Rent: <input type="number" id="rent"></label>
+    <label>Internet: <input type="number" id="internet"></label>
+    <label>CPS: <input type="number" id="cps"></label>
+    <label>Water: <input type="number" id="water"></label>
+    <label>Trash Waste: <input type="number" id="trash"></label>
+    <label>Phone Bill: <input type="number" id="phone"></label>
+    <label>Dad: <input type="number" id="dad"></label>
+    <label>Press Paid: <input type="number" id="pressPaid"></label>
+    <button onclick="calculateBills()">Calculate Summary</button>
+
+    <div class="summary" id="summary">
+      <p>Total = $0</p>
+      <p>Half of the total = $0</p>
+      <p>Press Paid = $0</p>
+      <p>Press’s Share After Deduction = $0</p>
+      <p>Prince’s Balance = $0</p>
+    </div>
+    <button onclick="printSummary()">Print / Save as PDF</button>
+    <button onclick="deleteMonth()">Delete This Month</button>
+    <button onclick="exportAll()">Export as JSON</button>
+    <button onclick="exportAllCSV()">Export as CSV</button>
+    <canvas id="chart" height="200" style="margin-top:2rem;"></canvas>
+  </div>
+</div>
+<div class="footer-note">Powered by Press</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const predefinedMonths = ['May 2025', 'June 2025', 'July 2025', 'August 2025', 'September 2025', 'October 2025', 'November 2025', 'December 2025', 'January 2026', 'February 2026', 'March 2026', 'April 2026'];
+
+let currentMonth = "";
+
+function populateMonths() {
+  const monthSelect = document.getElementById("monthSelect");
+  monthSelect.innerHTML = '<option value="">-- Select Month --</option>';
+  predefinedMonths.forEach(month => {
+    const opt = document.createElement("option");
+    opt.value = month;
+    opt.textContent = month;
+    monthSelect.appendChild(opt);
+  });
+}
+
+function loadMonth() {
+  currentMonth = document.getElementById("monthSelect").value;
+  if (!currentMonth) return;
+  const data = JSON.parse(localStorage.getItem("bills_" + currentMonth) || "{}");
+  ['rent','internet','cps','water','trash','phone','dad','pressPaid'].forEach(id => {
+    document.getElementById(id).value = data[id] || '';
+  });
+  document.getElementById("formSection").style.display = "block";
+  calculateBills();
+}
+
+function calculateBills() {
+  const fields = ['rent','internet','cps','water','trash','phone','dad','pressPaid'];
+  let data = {};
+  fields.forEach(id => {
+    data[id] = parseFloat(document.getElementById(id).value) || 0;
+  });
+  localStorage.setItem("bills_" + currentMonth, JSON.stringify(data));
+  const total = data.rent + data.internet + data.cps + data.water + data.trash + data.phone + data.dad;
+  const half = total / 2;
+  const pressShare = half - data.pressPaid;
+  const princeBalance = half + pressShare;
+  document.getElementById('summary').innerHTML = `
+    <p>Total = $${total.toFixed(2)}</p>
+    <p>Half of the total = $${half.toFixed(2)}</p>
+    <p>Press Paid = $${data.pressPaid.toFixed(2)}</p>
+    <p>Press’s Share After Deduction = $${pressShare.toFixed(2)}</p>
+    <p>Prince’s Balance = $${princeBalance.toFixed(2)}</p>
+  `;
+}
+
+function printSummary() {
+  if (!currentMonth) return alert("Please select a month first.");
+  window.print();
+}
+
+function deleteMonth() {
+  if (!currentMonth) return;
+  if (confirm(`Are you sure you want to delete "${currentMonth}"?`)) {
+    localStorage.removeItem("bills_" + currentMonth);
+    document.getElementById("formSection").style.display = "none";
+    alert("Month deleted.");
+  }
+}
+
+function exportAll() {
+  let exportData = {};
+  predefinedMonths.forEach(month => {
+    const data = JSON.parse(localStorage.getItem("bills_" + month) || "{}");
+    if (Object.keys(data).length > 0) {
+      exportData[month] = data;
+    }
+  });
+  const jsonString = JSON.stringify(exportData, null, 2);
+  const blob = new Blob([jsonString], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "monthly_bills_backup.json";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function exportAllCSV() {
+  let csv = "Month,Rent,Internet,CPS,Water,Trash,Phone,Dad,PressPaid\n";
+  predefinedMonths.forEach(month => {
+    const d = JSON.parse(localStorage.getItem("bills_" + month) || "{}");
+    if (Object.keys(d).length > 0) {
+      csv += `${month},${d.rent || 0},${d.internet || 0},${d.cps || 0},${d.water || 0},${d.trash || 0},${d.phone || 0},${d.dad || 0},${d.pressPaid || 0}\n`;
+    }
+  });
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "monthly_bills_log.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function generateChart() {
+  const labels = [], totals = [];
+  predefinedMonths.forEach(month => {
+    const d = JSON.parse(localStorage.getItem("bills_" + month) || "{}");
+    const total = (d.rent || 0) + (d.internet || 0) + (d.cps || 0) + (d.water || 0) + (d.trash || 0) + (d.phone || 0) + (d.dad || 0);
+    if (total > 0) {
+      labels.push(month);
+      totals.push(total);
+    }
+  });
+  const ctx = document.getElementById('chart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Monthly Total ($)',
+        data: totals,
+        backgroundColor: '#2563eb'
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+
+window.onload = function() {
+  populateMonths();
+  generateChart();
+}
+</script>
+</body>
+</html>
