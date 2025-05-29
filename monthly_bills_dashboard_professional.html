@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Monthly Bills Dashboard</title>
 <style>
   body {
@@ -18,50 +17,55 @@
     max-width: 540px;
     margin: auto;
     background: #fff;
+    border-radius: 10px;
     border: 1px solid #e0e0e0;
     padding: 1.5rem 2rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
   }
 
   h2 {
     text-align: center;
-    font-size: 1.3rem;
+    font-size: 1.4rem;
     margin-bottom: 1.5rem;
     font-weight: 600;
-    color: #111;
+    color: #1e3a8a;
+  }
+
+  .bill-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .bill-card {
+    background: #f0f2f5;
+    padding: 0.75rem;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 
   label {
     font-size: 0.95rem;
-    display: block;
-    margin-top: 1rem;
     font-weight: 500;
   }
 
   input[type="number"] {
-    width: 100%;
-    padding: 0.55rem 0.75rem;
+    width: 60px;
+    padding: 0.5rem;
     font-size: 0.95rem;
     border: 1px solid #ccc;
     border-radius: 4px;
     box-sizing: border-box;
+    text-align: right;
   }
 
-  button {
-    margin-top: 1.5rem;
-    padding: 0.75rem;
-    width: 100%;
-    font-size: 1rem;
-    font-weight: 600;
-    background-color: #1e3a8a;
-    color: white;
-    border: none;
+  select {
+    padding: 0.5rem;
+    font-size: 0.95rem;
     border-radius: 4px;
-    cursor: pointer;
-  }
-
-  button:hover {
-    background-color: #162f6a;
+    border: 1px solid #ccc;
   }
 
   .summary {
@@ -75,6 +79,7 @@
 
   .summary p {
     margin: 0.4rem 0;
+    font-weight: 500;
   }
 
   .footer-note {
@@ -86,52 +91,99 @@
 </style>
 </head>
 <body>
+
 <div class="container">
   <h2>May 2025 Monthly Bills</h2>
-  <label>Rent: <input type="number" id="rent" value="1761"></label>
-  <label>Internet: <input type="number" id="internet" value="70.36"></label>
-  <label>CPS: <input type="number" id="cps" value="110.38"></label>
-  <label>Water: <input type="number" id="water" value="150"></label>
-  <label>Trash Waste: <input type="number" id="trash" value="0"></label>
-  <label>Phone Bill: <input type="number" id="phone" value="200"></label>
-  <label>Dad: <input type="number" id="dad" value="50"></label>
-  <label>Press Paid: <input type="number" id="pressPaid" value="580.74"></label>
-  <button onclick="calculateBills()">Calculate Summary</button>
-
+  <div class="bill-group">
+    <div class="bill-card">
+      <label>Rent:</label>
+      <input type="number" id="rent" value="1761">
+      <select id="rentPaidBy">
+        <option value="Press">Press</option>
+        <option value="Prince">Prince</option>
+      </select>
+    </div>
+    <div class="bill-card">
+      <label>Internet:</label>
+      <input type="number" id="internet" value="70.36">
+      <select id="internetPaidBy">
+        <option value="Press">Press</option>
+        <option value="Prince">Prince</option>
+      </select>
+    </div>
+    <div class="bill-card">
+      <label>CPS:</label>
+      <input type="number" id="cps" value="110.38">
+      <select id="cpsPaidBy">
+        <option value="Press">Press</option>
+        <option value="Prince">Prince</option>
+      </select>
+    </div>
+    <div class="bill-card">
+      <label>Water:</label>
+      <input type="number" id="water" value="150">
+      <select id="waterPaidBy">
+        <option value="Press">Press</option>
+        <option value="Prince">Prince</option>
+      </select>
+    </div>
+    <div class="bill-card">
+      <label>Phone Bill:</label>
+      <input type="number" id="phone" value="200">
+      <select id="phonePaidBy">
+        <option value="Press">Press</option>
+        <option value="Prince">Prince</option>
+      </select>
+    </div>
+    <div class="bill-card">
+      <label>Trash:</label>
+      <input type="number" id="phone" value="200">
+      <select id="phonePaidBy">
+        <option value="Press">Press</option>
+        <option value="Prince">Prince</option>
+      </select>
+    </div>
+  </div>
   <div class="summary" id="summary">
     <p>Total = $0</p>
-    <p>Half of the total = $0</p>
     <p>Press Paid = $0</p>
-    <p>Press’s Share After Deduction = $0</p>
-    <p>Prince’s Balance = $0</p>
+    <p>Prince Paid = $0</p>
+    <p>Press Owes = $0</p>
+    <p>Prince Owes = $0</p>
   </div>
 </div>
+
 <div class="footer-note">Powered by Monthly Tracker</div>
 
 <script>
-function calculateBills() {
-  const rent = parseFloat(document.getElementById('rent').value) || 0;
-  const internet = parseFloat(document.getElementById('internet').value) || 0;
-  const cps = parseFloat(document.getElementById('cps').value) || 0;
-  const water = parseFloat(document.getElementById('water').value) || 0;
-  const trash = parseFloat(document.getElementById('trash').value) || 0;
-  const phone = parseFloat(document.getElementById('phone').value) || 0;
-  const dad = parseFloat(document.getElementById('dad').value) || 0;
-  const pressPaid = parseFloat(document.getElementById('pressPaid').value) || 0;
+document.querySelectorAll('input[type="number"], select').forEach(input => {
+    input.addEventListener("input", calculateBills);
+});
 
-  const total = rent + internet + cps + water + trash + phone + dad;
-  const half = total / 2;
-  const pressShare = half - pressPaid;
-  const princeBalance = half + pressShare;
+function calculateBills() {
+  let total = 0, pressPaid = 0, princePaid = 0;
+
+  document.querySelectorAll('.bill-card').forEach(card => {
+    let amount = parseFloat(card.querySelector('input').value) || 0;
+    let payer = card.querySelector('select').value;
+
+    total += amount;
+    if (payer === "Press") pressPaid += amount;
+    else princePaid += amount;
+  });
+
+  const pressOwes = (total / 2) - pressPaid;
+  const princeOwes = (total / 2) - princePaid;
 
   document.getElementById('summary').innerHTML = `
     <p>Total = $${total.toFixed(2)}</p>
-    <p>Half of the total = $${half.toFixed(2)}</p>
     <p>Press Paid = $${pressPaid.toFixed(2)}</p>
-    <p>Press’s Share After Deduction = $${pressShare.toFixed(2)}</p>
-    <p>Prince’s Balance = $${princeBalance.toFixed(2)}</p>
+    <p>Prince Paid = $${princePaid.toFixed(2)}</p>
+    <p>Press Owes = $${pressOwes.toFixed(2)}</p>
+    <p>Prince Owes = $${princeOwes.toFixed(2)}</p>
   `;
 }
 </script>
+
 </body>
 </html>
